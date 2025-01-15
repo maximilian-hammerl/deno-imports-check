@@ -1,9 +1,12 @@
-// import { parseArgs } from "@std/cli/parse-args";
+const TEST_DENO_CONFIG_FILE = 'deno.test.json'
 
 async function runCommand(command: Deno.Command): Promise<boolean> {
   try {
-    const { code } = await command.output()
-    console.log(`Code is ${code} (${code === 0 ? 'success' : 'failure'})`)
+    const { code, stdout, stderr } = await command.output()
+    console.log(`Code is ${code} (${code === 0 ? 'success' : 'failure'})`, {
+      stout: new TextDecoder().decode(stdout),
+      stderr: new TextDecoder().decode(stderr),
+    })
     return code === 0
   } catch (error) {
     throw new Error(`Error running command: ${error}`)
@@ -56,45 +59,41 @@ async function main() {
     throw new Error('Empty imports in deno.json')
   }
 
-  await writeDenoConfig('deno.json.backup', config)
+  const importsToRemove: Array<string> = []
 
   for (const key of Object.keys(config.imports)) {
-    console.log(`\nTesting removal of import: ${key}`)
+    console.info(`Testing removal of import ${key}`)
 
     const currentConfig = structuredClone(config)
     delete currentConfig.imports[key]
 
-    console.info('Overwriting deno.json')
-    await writeDenoConfig('deno.json', currentConfig)
+    await writeDenoConfig(TEST_DENO_CONFIG_FILE, currentConfig)
 
-    console.info('Running deno lint')
-    const lintSuccess = await runCommand(
-      new Deno.Command(Deno.execPath(), {
-        args: ['lint'],
-      }),
-    )
-    if (!lintSuccess) {
-      console.info(`✅ Import ${key} is required`)
-      continue
-    }
-
+    console.log('Running deno check')
     const checkSuccess = await runCommand(
       new Deno.Command(Deno.execPath(), {
-        args: ['check'],
+        args: ['check', '--config', TEST_DENO_CONFIG_FILE, '**/*.ts'],
       }),
     )
     if (!checkSuccess) {
-      console.info(`✅ Import ${key} is required`)
+      console.info(`Import ${key} is required`)
       continue
     }
 
-    console.info(`❌ Import ${key} is unnecessary, can be safely removed`)
+    console.info(`Import ${key} is not required, can be removed`)
+    importsToRemove.push(key)
   }
 
-  await writeDenoConfig('deno.json', config)
-  await Deno.remove('deno.json.backup')
+  await Deno.remove(TEST_DENO_CONFIG_FILE)
 
-  console.log('Done checking imports.')
+  if (importsToRemove.length > 0) {
+    console.info(`Found ${importsToRemove.length} imports to remove`)
+    for (const key of importsToRemove) {
+      console.info(`  ${key}`)
+    }
+  } else {
+    console.info('Found no imports to remove')
+  }
 }
 
 if (import.meta.main) {
