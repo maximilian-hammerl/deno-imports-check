@@ -34,14 +34,16 @@ async function readDenoConfig(): Promise<{
     try {
       return {
         filename,
-        config: parse(content),
+        config: parse(content) as DenoConfig,
       }
     } catch (error) {
       throw new Error(`Failed to parse config of ${filename}: ${error}`)
     }
   }
 
-  throw new Error(`Failed to find Deno config file (looked for ${DENO_CONFIG_FILENAMES})`)
+  throw new Error(
+    `Failed to find Deno config file (looked for ${DENO_CONFIG_FILENAMES})`,
+  )
 }
 
 async function writeDenoConfig(
@@ -62,7 +64,7 @@ async function writeDenoConfig(
 }
 
 async function main() {
-  const {filename, config} = await readDenoConfig()
+  const { filename, config } = await readDenoConfig()
   if (!config.imports) {
     throw new Error(`No imports found in ${filename}`)
   }
