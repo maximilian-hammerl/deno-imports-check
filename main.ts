@@ -1,4 +1,5 @@
 import { parse } from 'jsr:@std/jsonc'
+import { parseArgs } from 'jsr:@std/cli/parse-args'
 
 async function runCommand(command: Deno.Command): Promise<boolean> {
   try {
@@ -64,6 +65,12 @@ async function writeDenoConfig(
 }
 
 async function main() {
+  const {
+    write: writeDenoConfigFile,
+  } = parseArgs(Deno.args, {
+    boolean: ['write'],
+  })
+
   const { filename, config } = await readDenoConfig()
   if (!config.imports) {
     throw new Error(`No imports found in ${filename}`)
@@ -106,6 +113,16 @@ async function main() {
     console.info(`Found ${importsToRemove.length} imports to remove`)
     for (const key of importsToRemove) {
       console.info(`  ${key}`)
+    }
+
+    if (writeDenoConfigFile) {
+      config.imports = Object.fromEntries(
+        Object.entries(config.imports).filter(([key]) =>
+          !importsToRemove.includes(key)
+        ),
+      )
+      await writeDenoConfig(filename, config)
+      console.info(`Wrote ${filename}`)
     }
   } else {
     console.info('Found no imports to remove')
