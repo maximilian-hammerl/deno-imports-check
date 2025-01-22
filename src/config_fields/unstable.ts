@@ -13,27 +13,27 @@ export const DENO_CONFIG_UNSTABLE_TO_CHECK: DenoConfigFieldToCheck<
 > = {
   field: 'unstable',
   isCheckFieldEnabled: (options) => options.isCheckUnstableEnabled,
-  denoConfigFileHasField: denoConfigFileHasUnstable,
-  findEntriesToRemove: findUnstableToRemove,
-  removeRemovableEntries: removeRemovableUnstable,
+  denoConfigFileHasField: denoConfigFileHasUnstableEntries,
+  findRemovableEntries: findRemovableUnstableEntries,
+  removeRemovableEntries: removeRemovableUnstableEntries,
 }
 
-function denoConfigFileHasUnstable(
+function denoConfigFileHasUnstableEntries(
   config: DenoConfigurationFileSchema,
 ): config is DenoConfigurationFileSchemaWithUnstable {
   return config.unstable !== undefined &&
     Object.keys(config.unstable).length > 0
 }
 
-async function findUnstableToRemove(
+async function findRemovableUnstableEntries(
   testFilename: string,
   config: DenoConfigurationFileSchemaWithUnstable,
   options: ConfigOptions,
 ): Promise<Array<string>> {
-  const importsToRemove: Array<string> = []
+  const removableUnstableEntries: Array<string> = []
 
   for (const unstable of config.unstable) {
-    console.info(`Testing removal of unstable ${unstable}`)
+    console.info(`Testing removal of unstable entry ${unstable}`)
 
     const currentConfig = structuredClone(config)
     currentConfig.unstable = currentConfig.unstable.filter((x) =>
@@ -45,20 +45,22 @@ async function findUnstableToRemove(
     console.log('Running deno check')
     const checkSuccess = await runDenoCheck(testFilename, options)
     if (!checkSuccess) {
-      console.info(`Unstable ${unstable} is required`)
+      console.info(`Unstable entry ${unstable} is required`)
       continue
     }
 
-    console.info(`Unstable ${unstable} is not required, can be removed`)
-    importsToRemove.push(unstable)
+    console.info(`Unstable entry ${unstable} is not required, can be removed`)
+    removableUnstableEntries.push(unstable)
   }
 
-  return importsToRemove
+  return removableUnstableEntries
 }
 
-function removeRemovableUnstable(
+function removeRemovableUnstableEntries(
   config: DenoConfigurationFileSchemaWithUnstable,
-  unstableToRemove: Array<string>,
+  removableUnstableEntries: Array<string>,
 ): void {
-  config.unstable = config.unstable.filter((x) => !unstableToRemove.includes(x))
+  config.unstable = config.unstable.filter((x) =>
+    !removableUnstableEntries.includes(x)
+  )
 }

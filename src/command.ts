@@ -34,6 +34,23 @@ export async function runDenoCheck(
   )
 }
 
+export async function restoreFiles(
+  options: ConfigOptions,
+): Promise<void> {
+  const gitRestoreCommand = new Deno.Command('git', {
+    args: ['restore', '--quiet', '.'],
+  })
+
+  const success = await runCommand(
+    gitRestoreCommand,
+    options,
+  )
+
+  if (!success) {
+    throw new Error('Failed to restore files')
+  }
+}
+
 export async function checkHasUncommittedChanges(
   options: ConfigOptions,
 ): Promise<boolean> {

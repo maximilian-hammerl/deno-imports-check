@@ -13,26 +13,26 @@ export const DENO_CONFIG_IMPORTS_TO_CHECK: DenoConfigFieldToCheck<
 > = {
   field: 'imports',
   isCheckFieldEnabled: (options) => options.isCheckImportsEnabled,
-  denoConfigFileHasField: denoConfigFileHasImports,
-  findEntriesToRemove: findImportsToRemove,
-  removeRemovableEntries: removeRemovableImports,
+  denoConfigFileHasField: denoConfigFileHasImportEntries,
+  findRemovableEntries: findRemovableImportEntries,
+  removeRemovableEntries: removeRemovableImportEntries,
 }
 
-function denoConfigFileHasImports(
+function denoConfigFileHasImportEntries(
   config: DenoConfigurationFileSchema,
 ): config is DenoConfigurationFileSchemaWithImports {
   return config.imports !== undefined && Object.keys(config.imports).length > 0
 }
 
-async function findImportsToRemove(
+async function findRemovableImportEntries(
   testFilename: string,
   config: DenoConfigurationFileSchemaWithImports,
   options: ConfigOptions,
 ): Promise<Array<string>> {
-  const importsToRemove: Array<string> = []
+  const removableImportEntries: Array<string> = []
 
   for (const key of Object.keys(config.imports)) {
-    console.info(`Testing removal of import ${key}`)
+    console.info(`Testing removal of imports entry ${key}`)
 
     const currentConfig = structuredClone(config)
     delete currentConfig.imports[key]
@@ -42,23 +42,23 @@ async function findImportsToRemove(
     console.log('Running deno check')
     const checkSuccess = await runDenoCheck(testFilename, options)
     if (!checkSuccess) {
-      console.info(`Import ${key} is required`)
+      console.info(`Imports entry ${key} is required`)
       continue
     }
 
-    console.info(`Import ${key} is not required, can be removed`)
-    importsToRemove.push(key)
+    console.info(`Imports entry ${key} is not required, can be removed`)
+    removableImportEntries.push(key)
   }
 
-  return importsToRemove
+  return removableImportEntries
 }
 
-function removeRemovableImports(
+function removeRemovableImportEntries(
   config: DenoConfigurationFileSchemaWithImports,
-  importsToRemove: Array<string>,
+  removableImportEntries: Array<string>,
 ): void {
   config.imports = Object.fromEntries(
     Object.entries((config as DenoConfigurationFileSchemaWithImports).imports)
-      .filter(([key]) => !importsToRemove.includes(key)),
+      .filter(([key]) => !removableImportEntries.includes(key)),
   )
 }

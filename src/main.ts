@@ -13,14 +13,14 @@ export type DenoConfigFieldToCheck<
   denoConfigFileHasField: (
     config: DenoConfigurationFileSchema,
   ) => config is FileSchemaWithField
-  findEntriesToRemove: (
+  findRemovableEntries: (
     testFilename: string,
     config: FileSchemaWithField,
     options: ConfigOptions,
   ) => Promise<Array<string>>
   removeRemovableEntries: (
     config: FileSchemaWithField,
-    entriesToRemove: Array<string>,
+    removableEntries: Array<string>,
   ) => void
 }
 
@@ -31,7 +31,7 @@ async function checkDenoConfigField<
     field,
     isCheckFieldEnabled,
     denoConfigFileHasField,
-    findEntriesToRemove,
+    findRemovableEntries,
     removeRemovableEntries,
   }: DenoConfigFieldToCheck<FileSchemaWithField>,
   testFilename: string,
@@ -39,33 +39,33 @@ async function checkDenoConfigField<
   options: ConfigOptions,
 ): Promise<boolean> {
   if (!isCheckFieldEnabled(options)) {
-    console.info(`Checking ${field} disabled`)
+    console.info(`Checking ${field} field disabled`)
     return false
   }
 
   if (!denoConfigFileHasField(config)) {
-    console.info(`No ${field} found`)
+    console.info(`No ${field} field or entries found`)
     return false
   }
 
-  console.info(`Testing removal of ${field}`)
-  const entriesToRemove = await findEntriesToRemove(
+  console.info(`Testing removal of ${field} entries`)
+  const removableEntries = await findRemovableEntries(
     testFilename,
     config,
     options,
   )
 
-  if (entriesToRemove.length === 0) {
-    console.info(`Found no ${field} to remove`)
+  if (removableEntries.length === 0) {
+    console.info(`Found no removable ${field} entries`)
     return false
   }
 
-  console.info(`Found ${entriesToRemove.length} ${field} to remove`)
-  for (const key of entriesToRemove) {
+  console.info(`Found ${removableEntries.length} removable ${field} entries`)
+  for (const key of removableEntries) {
     console.info(`  ${key}`)
   }
 
-  removeRemovableEntries(config, entriesToRemove)
+  removeRemovableEntries(config, removableEntries)
   return true
 }
 
@@ -87,36 +87,37 @@ async function main() {
 
   const testFilename = `test.${filename}`
 
-  const foundImportsToRemove = await checkDenoConfigField(
+  const foundRemovableImportEntries = await checkDenoConfigField(
     DENO_CONFIG_IMPORTS_TO_CHECK,
     testFilename,
     config,
     options,
   )
 
-  const foundUnstableToRemove = await checkDenoConfigField(
+  const foundRemovableUnstableEntries = await checkDenoConfigField(
     DENO_CONFIG_UNSTABLE_TO_CHECK,
     testFilename,
     config,
     options,
   )
 
-  const foundConfigToRemove = foundImportsToRemove || foundUnstableToRemove
+  const foundConfigToRemove = foundRemovableImportEntries ||
+    foundRemovableUnstableEntries
 
   await Deno.remove(testFilename)
 
   if (options.isOverwriteDenoConfigFileEnabled) {
     if (foundConfigToRemove) {
-      console.info(`Found config to remove, overwriting ${filename}`)
+      console.info(`Found entries to remove, overwriting ${filename}`)
       await writeDenoConfigFile(filename, config, options)
     } else {
-      console.info(`Found no config to remove, not overwriting ${filename}`)
+      console.info(`Found no entries to remove, not overwriting ${filename}`)
     }
   } else {
     if (foundConfigToRemove) {
-      console.info('Found config to remove')
+      console.info('Found entries to remove')
     } else {
-      console.info('Found no config to remove')
+      console.info('Found no entries to remove')
     }
   }
 }
