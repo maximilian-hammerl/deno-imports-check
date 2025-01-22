@@ -1,5 +1,10 @@
 import { parse } from '@std/jsonc'
 import { parseArgs } from '@std/cli/parse-args'
+import type { DenoConfigurationFileSchema } from './deno_config_file_schema.ts'
+
+type DenoConfigurationFileSchemaWithImports =
+  & Omit<DenoConfigurationFileSchema, 'imports'>
+  & Required<Pick<DenoConfigurationFileSchema, 'imports'>>
 
 async function runCommand(command: Deno.Command): Promise<boolean> {
   try {
@@ -16,13 +21,9 @@ async function runCommand(command: Deno.Command): Promise<boolean> {
 
 const DENO_CONFIG_FILENAMES = ['deno.jsonc', 'deno.json', 'import_map.json']
 
-type DenoConfig = {
-  imports: Record<string, string>
-} & Record<string, unknown>
-
-async function readDenoConfig(): Promise<{
+async function readDenoConfigFile(): Promise<{
   filename: string
-  config: DenoConfig
+  config: DenoConfigurationFileSchema
 }> {
   for (const filename of DENO_CONFIG_FILENAMES) {
     let content: string
@@ -35,7 +36,7 @@ async function readDenoConfig(): Promise<{
     try {
       return {
         filename,
-        config: parse(content) as DenoConfig,
+        config: parse(content) as DenoConfigurationFileSchema,
       }
     } catch (error) {
       throw new Error(`Failed to parse config of ${filename}: ${error}`)
@@ -47,9 +48,9 @@ async function readDenoConfig(): Promise<{
   )
 }
 
-async function writeDenoConfig(
+async function writeDenoConfigFile(
   filename: string,
-  config: DenoConfig,
+  config: DenoConfigurationFileSchema,
 ): Promise<void> {
   let content: string
   try {
@@ -64,20 +65,23 @@ async function writeDenoConfig(
   }
 }
 
+function denoConfigFileHasImports(
+  config: DenoConfigurationFileSchema,
+): config is DenoConfigurationFileSchemaWithImports {
+  return config.imports !== undefined && Object.keys(config.imports).length > 0
+}
+
 async function main() {
   const {
-    write: writeDenoConfigFile,
+    write: writeDenoConfigFileFile,
   } = parseArgs(Deno.args, {
     boolean: ['write'],
   })
 
-  const { filename, config } = await readDenoConfig()
-  if (!config.imports) {
-    throw new Error(`No imports found in ${filename}`)
-  }
+  const { filename, config } = await readDenoConfigFile()
 
-  if (!Object.keys(config.imports).length) {
-    throw new Error(`Empty imports in ${filename}`)
+  if (!denoConfigFileHasImports(config)) {
+    throw new Error(`No or empty imports in ${filename}`)
   }
 
   const testFilename = `test.${filename}`
@@ -90,7 +94,7 @@ async function main() {
     const currentConfig = structuredClone(config)
     delete currentConfig.imports[key]
 
-    await writeDenoConfig(testFilename, currentConfig)
+    await writeDenoConfigFile(testFilename, currentConfig)
 
     console.log('Running deno check')
     const checkSuccess = await runCommand(
@@ -115,13 +119,13 @@ async function main() {
       console.info(`  ${key}`)
     }
 
-    if (writeDenoConfigFile) {
+    if (writeDenoConfigFileFile) {
       config.imports = Object.fromEntries(
         Object.entries(config.imports).filter(([key]) =>
           !importsToRemove.includes(key)
         ),
       )
-      await writeDenoConfig(filename, config)
+      await writeDenoConfigFile(filename, config)
       console.info(`Wrote ${filename}`)
     }
   } else {

@@ -1,6 +1,6 @@
 {
   "name": "@maximilian-hammerl/deno-project-config-check",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "lock": false,
   "tasks": {
@@ -9,7 +9,8 @@
     "check": "deno check --config deno.json **/*.ts",
     "validate": "deno task format && deno task lint && deno task check",
     "dev": "deno run --allow-read --allow-write --allow-run main.ts",
-    "download-deno-config-file-json-schema": "curl -L -O https://deno.land/x/deno/cli/schemas/config-file.v1.json"
+    "download-deno-config-file-json-schema": "./scripts/download-deno-config-file-json-schema.sh",
+    "compile-deno-config-file-json-schema-to-typescript-types": "./scripts/compile-deno-config-file-json-schema-to-typescript-types.sh"
   },
   "imports": {
     "@std/cli": "jsr:@std/cli@^1.0.11",
