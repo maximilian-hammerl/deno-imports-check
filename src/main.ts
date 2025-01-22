@@ -104,6 +104,12 @@ async function main() {
     } else {
       console.info(`Found no config to remove, not overwriting ${filename}`)
     }
+  } else {
+    if (foundConfigToRemove) {
+      console.info('Found config to remove')
+    } else {
+      console.info('Found no config to remove')
+    }
   }
 }
 

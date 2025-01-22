@@ -32,23 +32,25 @@ async function findUnstableToRemove(
 ): Promise<Array<string>> {
   const importsToRemove: Array<string> = []
 
-  for (const key of Object.keys(config.unstable)) {
-    console.info(`Testing removal of unstable ${key}`)
+  for (const unstable of config.unstable) {
+    console.info(`Testing removal of unstable ${unstable}`)
 
     const currentConfig = structuredClone(config)
-    currentConfig.unstable = currentConfig.unstable.filter((x) => x !== key)
+    currentConfig.unstable = currentConfig.unstable.filter((x) =>
+      x !== unstable
+    )
 
     await writeDenoConfigFile(testFilename, currentConfig, options)
 
     console.log('Running deno check')
     const checkSuccess = await runDenoCheck(testFilename, options)
     if (!checkSuccess) {
-      console.info(`Unstable ${key} is required`)
+      console.info(`Unstable ${unstable} is required`)
       continue
     }
 
-    console.info(`Unstable ${key} is not required, can be removed`)
-    importsToRemove.push(key)
+    console.info(`Unstable ${unstable} is not required, can be removed`)
+    importsToRemove.push(unstable)
   }
 
   return importsToRemove
