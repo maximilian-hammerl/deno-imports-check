@@ -4,10 +4,13 @@
   "license": "MIT",
   "lock": false,
   "tasks": {
-    "format": "deno fmt --config deno.json",
-    "lint": "deno lint --fix --config deno.json",
-    "check": "deno check --config deno.json **/*.ts",
-    "validate": "deno task format && deno task lint && deno task check",
+    "format": "deno fmt",
+    "format-check": "deno fmt --check",
+    "lint": "deno lint --fix",
+    "lint-check": "deno lint",
+    "type-check": "deno check **/*.ts",
+    "validate": "deno task format && deno task lint && deno task type-check",
+    "validate-check": "deno task format-check && deno task lint-check && deno task type-check",
     "dev": "deno run --allow-read --allow-write --allow-run main.ts",
     "download-deno-config-file-json-schema": "./scripts/download-deno-config-file-json-schema.sh",
     "compile-deno-config-file-json-schema-to-typescript-types": "./scripts/compile-deno-config-file-json-schema-to-typescript-types.sh"

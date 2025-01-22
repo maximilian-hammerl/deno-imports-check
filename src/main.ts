@@ -1,135 +1,109 @@
-import { parse } from '@std/jsonc'
-import { parseArgs } from '@std/cli/parse-args'
+import { readDenoConfigFile, writeDenoConfigFile } from './deno_config_file.ts'
+import { type ConfigOptions, getConfigOptions } from './config_options.ts'
 import type { DenoConfigurationFileSchema } from './deno_config_file_schema.ts'
+import { DENO_CONFIG_IMPORTS_TO_CHECK } from './config_fields/imports.ts'
+import { DENO_CONFIG_UNSTABLE_TO_CHECK } from './config_fields/unstable.ts'
 
-type DenoConfigurationFileSchemaWithImports =
-  & Omit<DenoConfigurationFileSchema, 'imports'>
-  & Required<Pick<DenoConfigurationFileSchema, 'imports'>>
-
-async function runCommand(command: Deno.Command): Promise<boolean> {
-  try {
-    const { code, stdout, stderr } = await command.output()
-    console.log(`Code is ${code} (${code === 0 ? 'success' : 'failure'})`, {
-      stout: new TextDecoder().decode(stdout),
-      stderr: new TextDecoder().decode(stderr),
-    })
-    return code === 0
-  } catch (error) {
-    throw new Error(`Error running command: ${error}`)
-  }
+export type DenoConfigFieldToCheck<
+  FileSchemaWithField extends DenoConfigurationFileSchema,
+> = {
+  field: string
+  isCheckFieldEnabled: (options: ConfigOptions) => boolean
+  denoConfigFileHasField: (
+    config: DenoConfigurationFileSchema,
+  ) => config is FileSchemaWithField
+  findEntriesToRemove: (
+    testFilename: string,
+    config: FileSchemaWithField,
+    options: ConfigOptions,
+  ) => Promise<Array<string>>
+  removeRemovableEntries: (
+    config: FileSchemaWithField,
+    entriesToRemove: Array<string>,
+  ) => void
 }
 
-const DENO_CONFIG_FILENAMES = ['deno.jsonc', 'deno.json', 'import_map.json']
-
-async function readDenoConfigFile(): Promise<{
-  filename: string
-  config: DenoConfigurationFileSchema
-}> {
-  for (const filename of DENO_CONFIG_FILENAMES) {
-    let content: string
-    try {
-      content = await Deno.readTextFile(filename)
-    } catch (_error) {
-      continue
-    }
-
-    try {
-      return {
-        filename,
-        config: parse(content) as DenoConfigurationFileSchema,
-      }
-    } catch (error) {
-      throw new Error(`Failed to parse config of ${filename}: ${error}`)
-    }
+async function checkDenoConfigField<
+  FileSchemaWithField extends DenoConfigurationFileSchema,
+>(
+  {
+    field,
+    isCheckFieldEnabled,
+    denoConfigFileHasField,
+    findEntriesToRemove,
+    removeRemovableEntries,
+  }: DenoConfigFieldToCheck<FileSchemaWithField>,
+  testFilename: string,
+  config: DenoConfigurationFileSchema,
+  options: ConfigOptions,
+): Promise<boolean> {
+  if (!isCheckFieldEnabled(options)) {
+    console.info(`Checking ${field} disabled`)
+    return false
   }
 
-  throw new Error(
-    `Failed to find Deno config file (looked for ${DENO_CONFIG_FILENAMES})`,
+  if (!denoConfigFileHasField(config)) {
+    console.info(`No ${field} found`)
+    return false
+  }
+
+  console.info(`Testing removal of ${field}`)
+  const entriesToRemove = await findEntriesToRemove(
+    testFilename,
+    config,
+    options,
   )
-}
 
-async function writeDenoConfigFile(
-  filename: string,
-  config: DenoConfigurationFileSchema,
-): Promise<void> {
-  let content: string
-  try {
-    content = JSON.stringify(config, null, 2)
-  } catch (error) {
-    throw new Error(`Failed to stringify config for ${filename}: ${error}`)
+  if (entriesToRemove.length === 0) {
+    console.info(`Found no ${field} to remove`)
+    return false
   }
-  try {
-    await Deno.writeTextFile(filename, content)
-  } catch (error) {
-    throw new Error(`Failed to write ${filename}: ${error}`)
-  }
-}
 
-function denoConfigFileHasImports(
-  config: DenoConfigurationFileSchema,
-): config is DenoConfigurationFileSchemaWithImports {
-  return config.imports !== undefined && Object.keys(config.imports).length > 0
+  console.info(`Found ${entriesToRemove.length} ${field} to remove`)
+  for (const key of entriesToRemove) {
+    console.info(`  ${key}`)
+  }
+
+  removeRemovableEntries(config, entriesToRemove)
+  return true
 }
 
 async function main() {
-  const {
-    write: writeDenoConfigFileFile,
-  } = parseArgs(Deno.args, {
-    boolean: ['write'],
-  })
+  const options = getConfigOptions()
 
-  const { filename, config } = await readDenoConfigFile()
-
-  if (!denoConfigFileHasImports(config)) {
-    throw new Error(`No or empty imports in ${filename}`)
+  if (options.isDebug) {
+    console.debug('Config options', options)
   }
+
+  const { filename, config } = await readDenoConfigFile(options)
 
   const testFilename = `test.${filename}`
 
-  const importsToRemove: Array<string> = []
+  const foundImportsToRemove = await checkDenoConfigField(
+    DENO_CONFIG_IMPORTS_TO_CHECK,
+    testFilename,
+    config,
+    options,
+  )
 
-  for (const key of Object.keys(config.imports)) {
-    console.info(`Testing removal of import ${key}`)
+  const foundUnstableToRemove = await checkDenoConfigField(
+    DENO_CONFIG_UNSTABLE_TO_CHECK,
+    testFilename,
+    config,
+    options,
+  )
 
-    const currentConfig = structuredClone(config)
-    delete currentConfig.imports[key]
-
-    await writeDenoConfigFile(testFilename, currentConfig)
-
-    console.log('Running deno check')
-    const checkSuccess = await runCommand(
-      new Deno.Command(Deno.execPath(), {
-        args: ['check', '--config', testFilename, '**/*.ts'],
-      }),
-    )
-    if (!checkSuccess) {
-      console.info(`Import ${key} is required`)
-      continue
-    }
-
-    console.info(`Import ${key} is not required, can be removed`)
-    importsToRemove.push(key)
-  }
+  const foundConfigToRemove = foundImportsToRemove || foundUnstableToRemove
 
   await Deno.remove(testFilename)
 
-  if (importsToRemove.length > 0) {
-    console.info(`Found ${importsToRemove.length} imports to remove`)
-    for (const key of importsToRemove) {
-      console.info(`  ${key}`)
+  if (options.isOverwriteDenoConfigFileEnabled) {
+    if (foundConfigToRemove) {
+      console.info(`Found config to remove, overwriting ${filename}`)
+      await writeDenoConfigFile(filename, config, options)
+    } else {
+      console.info(`Found no config to remove, not overwriting ${filename}`)
     }
-
-    if (writeDenoConfigFileFile) {
-      config.imports = Object.fromEntries(
-        Object.entries(config.imports).filter(([key]) =>
-          !importsToRemove.includes(key)
-        ),
-      )
-      await writeDenoConfigFile(filename, config)
-      console.info(`Wrote ${filename}`)
-    }
-  } else {
-    console.info('Found no imports to remove')
   }
 }
 
