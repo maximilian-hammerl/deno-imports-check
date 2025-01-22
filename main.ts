@@ -1,5 +1,5 @@
-import { parse } from 'jsr:@std/jsonc'
-import { parseArgs } from 'jsr:@std/cli/parse-args'
+import { parse } from '@std/jsonc'
+import { parseArgs } from '@std/cli/parse-args'
 
 async function runCommand(command: Deno.Command): Promise<boolean> {
   try {

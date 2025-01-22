@@ -1,9 +1,15 @@
 {
+  "lock": false,
   "tasks": {
     "format": "deno fmt --config deno.json",
     "lint": "deno lint --fix --config deno.json",
     "check": "deno check --config deno.json **/*.ts",
-    "dev": "deno run --allow-read --allow-write --allow-run main.ts"
+    "dev": "deno run --allow-read --allow-write --allow-run main.ts",
+    "download-deno-config-file-json-schema": "curl -L -O https://deno.land/x/deno/cli/schemas/config-file.v1.json"
+  },
+  "imports": {
+    "@std/jsonc": "jsr:@std/jsonc",
+    "@std/cli/parse-args": "jsr:@std/cli/parse-args"
   },
   "lint": {
     "rules": {
