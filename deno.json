@@ -1,15 +1,19 @@
 {
+  "name": "@maximilian-hammerl/deno-project-config-check",
+  "version": "0.1.0",
+  "license": "MIT",
   "lock": false,
   "tasks": {
     "format": "deno fmt --config deno.json",
     "lint": "deno lint --fix --config deno.json",
     "check": "deno check --config deno.json **/*.ts",
+    "validate": "deno task format && deno task lint && deno task check",
     "dev": "deno run --allow-read --allow-write --allow-run main.ts",
     "download-deno-config-file-json-schema": "curl -L -O https://deno.land/x/deno/cli/schemas/config-file.v1.json"
   },
   "imports": {
-    "@std/jsonc": "jsr:@std/jsonc",
-    "@std/cli/parse-args": "jsr:@std/cli/parse-args"
+    "@std/cli": "jsr:@std/cli@^1.0.11",
+    "@std/jsonc": "jsr:@std/jsonc@^1.0.1"
   },
   "lint": {
     "rules": {
@@ -22,5 +26,6 @@
   "fmt": {
     "semiColons": false,
     "singleQuote": true
-  }
+  },
+  "exports": "./main.ts"
 }
