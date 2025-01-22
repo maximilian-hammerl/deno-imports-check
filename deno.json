@@ -1,6 +1,6 @@
 {
   "name": "@maximilian-hammerl/deno-project-config-check",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "lock": false,
   "tasks": {
@@ -27,5 +27,12 @@
     "semiColons": false,
     "singleQuote": true
   },
-  "exports": "./main.ts"
+  "exports": "./src/main.ts",
+  "publish": {
+    "include": [
+      "LICENSE.md",
+      "README.md",
+      "src/**/*.ts"
+    ]
+  }
 }
