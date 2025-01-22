@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/deno-imports-check.iml" filepath="$PROJECT_DIR$/.idea/deno-imports-check.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/deno-project-config-check.iml" filepath="$PROJECT_DIR$/.idea/deno-project-config-check.iml" />
     </modules>
   </component>
 </project>
