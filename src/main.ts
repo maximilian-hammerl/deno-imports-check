@@ -3,6 +3,7 @@ import { type ConfigOptions, getConfigOptions } from './config_options.ts'
 import type { DenoConfigurationFileSchema } from './deno_config_file_schema.ts'
 import { DENO_CONFIG_IMPORTS_TO_CHECK } from './config_fields/imports.ts'
 import { DENO_CONFIG_UNSTABLE_TO_CHECK } from './config_fields/unstable.ts'
+import { checkHasUncommittedChanges } from './command.ts'
 
 export type DenoConfigFieldToCheck<
   FileSchemaWithField extends DenoConfigurationFileSchema,
@@ -73,6 +74,13 @@ async function main() {
 
   if (options.isDebug) {
     console.debug('Config options', options)
+  }
+
+  if (options.isGitEnabled) {
+    if ((await checkHasUncommittedChanges(options))) {
+      console.warn('Uncommitted changes found, exiting')
+      return
+    }
   }
 
   const { filename, config } = await readDenoConfigFile(options)

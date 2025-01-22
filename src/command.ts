@@ -33,3 +33,18 @@ export async function runDenoCheck(
     options,
   )
 }
+
+export async function checkHasUncommittedChanges(
+  options: ConfigOptions,
+): Promise<boolean> {
+  const gitDiffCommand = new Deno.Command('git', {
+    args: ['diff', '--quiet'],
+  })
+
+  const success = await runCommand(
+    gitDiffCommand,
+    options,
+  )
+  // Success means no uncommitted changes
+  return !success
+}

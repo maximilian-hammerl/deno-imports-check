@@ -5,17 +5,29 @@ export type ConfigOptions = {
   isDebug: boolean
   isCheckImportsEnabled: boolean
   isCheckUnstableEnabled: boolean
+  isGitEnabled: boolean
 }
 
 export function getConfigOptions(): ConfigOptions {
   const parsedArgs = parseArgs(Deno.args, {
-    boolean: ['overwrite', 'debug', 'check-imports', 'check-unstable'],
-    negatable: ['check-imports', 'check-unstable'],
+    boolean: [
+      'overwrite',
+      'debug',
+      'check-imports',
+      'check-unstable',
+      'git',
+    ],
+    negatable: [
+      'check-imports',
+      'check-unstable',
+      'git',
+    ],
     default: {
       overwrite: false,
       debug: false,
       'check-imports': true,
       'check-unstable': true,
+      git: true,
     },
   })
 
@@ -24,5 +36,6 @@ export function getConfigOptions(): ConfigOptions {
     isDebug: parsedArgs.debug,
     isCheckImportsEnabled: parsedArgs['check-imports'],
     isCheckUnstableEnabled: parsedArgs['check-unstable'],
+    isGitEnabled: parsedArgs.git,
   }
 }
