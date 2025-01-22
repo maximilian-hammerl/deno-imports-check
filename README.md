@@ -1,23 +1,37 @@
 # deno-project-config-check
 
 `deno-project-config-check` is a command-line tool designed to help you identify
-and remove unused imports of your Deno projects.
+and remove unused entries in the Deno config file of your Deno projects.
 
 ## Usage
 
 To run the CLI tool:
 
+#### Longest, most restrictive:
+
 ```
-deno run --allow-read --allow-write --allow-run="deno,git" jsr:@maximilian-hammerl/deno-project-config-check
+deno run --allow-read --allow-write=deno.jsonc,deno.json,import_map.json,test.deno.jsonc,test.deno.json,test.import_map.json --allow-run=deno,git jsr:@maximilian-hammerl/deno-project-config-check
+```
+
+#### Middle of the road:
+
+```
+deno run --allow-read --allow-write --allow-run jsr:@maximilian-hammerl/deno-project-config-check
+```
+
+#### Shortest, least restrictive:
+
+```
+deno run --allow-all jsr:@maximilian-hammerl/deno-project-config-check
 ```
 
 ### Permissions
 
-| Permission               | Reason                                                                            |
-| ------------------------ | --------------------------------------------------------------------------------- |
-| `--allow-read`           | To read your `deno.jsonc`, `deno.json` or `import_map.json` config file           |
-| `--allow-write`          | To write the temporary config file and, if configured, overwrite your config file |
-| `--allow-run="deno,git"` | to run `deno check` to test config changes and, if enabled, `git`                 |
+| Permission               | Reason                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| `--allow-read`           | To read your `deno.jsonc`, `deno.json` or `import_map.json` config file        |
+| `--allow-write`          | To write the temporary config file and, if enabled, overwrite your config file |
+| `--allow-run="deno,git"` | To run `deno check` to test config changes and, if enabled, `git`              |
 
 ### Arguments
 
