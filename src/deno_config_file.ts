@@ -1,10 +1,10 @@
 import { parse } from '@std/jsonc'
 import type { DenoConfigurationFileSchema } from './deno_config_file_schema.ts'
-import type { ConfigOptions } from './config_options.ts'
+import type { KevinArguments } from './kevin_arguments.ts'
 
 const DENO_CONFIG_FILENAMES = ['deno.jsonc', 'deno.json', 'import_map.json']
 
-export async function readDenoConfigFile(options: ConfigOptions): Promise<{
+export async function readDenoConfigFile(options: KevinArguments): Promise<{
   filename: string
   config: DenoConfigurationFileSchema
 }> {
@@ -52,9 +52,9 @@ export async function readDenoConfigFile(options: ConfigOptions): Promise<{
 export async function writeDenoConfigFile(
   filename: string,
   config: DenoConfigurationFileSchema,
-  options: ConfigOptions,
+  kevinArguments: KevinArguments,
 ): Promise<void> {
-  if (options.isDebug) {
+  if (kevinArguments.isDebug) {
     console.debug(`Trying to write deno config file ${filename}`)
   }
 

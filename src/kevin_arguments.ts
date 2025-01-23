@@ -1,6 +1,6 @@
 import { parseArgs } from '@std/cli/parse-args'
 
-export type ConfigOptions = {
+export type KevinArguments = {
   isOverwriteDenoConfigFileEnabled: boolean
   isDebug: boolean
   isCheckImportsEnabled: boolean
@@ -8,7 +8,7 @@ export type ConfigOptions = {
   isGitEnabled: boolean
 }
 
-export function getConfigOptions(): ConfigOptions {
+export function getKevinArguments(): KevinArguments {
   const parsedArgs = parseArgs(Deno.args, {
     boolean: [
       'overwrite',

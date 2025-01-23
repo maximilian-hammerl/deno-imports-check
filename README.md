@@ -27,11 +27,11 @@ deno run --allow-all jsr:@maximilian-hammerl/deno-project-config-check
 
 ### Permissions
 
-| Permission               | Reason                                                                         |
-| ------------------------ | ------------------------------------------------------------------------------ |
-| `--allow-read`           | To read your `deno.jsonc`, `deno.json` or `import_map.json` config file        |
-| `--allow-write`          | To write the temporary config file and, if enabled, overwrite your config file |
-| `--allow-run="deno,git"` | To run `deno check` to test config changes and, if enabled, `git`              |
+| Permission      | Reason                                                                         |
+| --------------- | ------------------------------------------------------------------------------ |
+| `--allow-read`  | To read your `deno.jsonc`, `deno.json` or `import_map.json` config file        |
+| `--allow-write` | To write the temporary config file and, if enabled, overwrite your config file |
+| `--allow-run`   | To run `deno check` to test config changes and, if enabled, `git`              |
 
 ### Arguments
 

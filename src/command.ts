@@ -1,13 +1,13 @@
-import type { ConfigOptions } from './config_options.ts'
+import type { KevinArguments } from './kevin_arguments.ts'
 
 async function runCommand(
   command: Deno.Command,
-  { isDebug }: ConfigOptions,
+  kevinArguments: KevinArguments,
 ): Promise<boolean> {
   try {
     const { code, stdout, stderr } = await command.output()
 
-    if (isDebug) {
+    if (kevinArguments.isDebug) {
       console.debug(`Code is ${code} (${code === 0 ? 'success' : 'failure'})`, {
         stout: new TextDecoder().decode(stdout),
         stderr: new TextDecoder().decode(stderr),
@@ -22,7 +22,7 @@ async function runCommand(
 
 export async function runDenoCheck(
   configFilename: string,
-  options: ConfigOptions,
+  kevinArguments: KevinArguments,
 ): Promise<boolean> {
   const denoCheckCommand = new Deno.Command(Deno.execPath(), {
     args: ['check', '--config', configFilename, '**/*.ts'],
@@ -30,12 +30,12 @@ export async function runDenoCheck(
 
   return await runCommand(
     denoCheckCommand,
-    options,
+    kevinArguments,
   )
 }
 
 export async function restoreFiles(
-  options: ConfigOptions,
+  kevinArguments: KevinArguments,
 ): Promise<void> {
   const gitRestoreCommand = new Deno.Command('git', {
     args: ['restore', '--quiet', '.'],
@@ -43,7 +43,7 @@ export async function restoreFiles(
 
   const success = await runCommand(
     gitRestoreCommand,
-    options,
+    kevinArguments,
   )
 
   if (!success) {
@@ -52,7 +52,7 @@ export async function restoreFiles(
 }
 
 export async function checkHasUncommittedChanges(
-  options: ConfigOptions,
+  kevinArguments: KevinArguments,
 ): Promise<boolean> {
   const gitDiffCommand = new Deno.Command('git', {
     args: ['diff', '--quiet'],
@@ -60,7 +60,7 @@ export async function checkHasUncommittedChanges(
 
   const success = await runCommand(
     gitDiffCommand,
-    options,
+    kevinArguments,
   )
   // Success means no uncommitted changes
   return !success

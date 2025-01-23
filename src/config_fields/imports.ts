@@ -1,8 +1,8 @@
 import { writeDenoConfigFile } from '../deno_config_file.ts'
 import { runDenoCheck } from '../command.ts'
-import type { ConfigOptions } from '../config_options.ts'
+import type { KevinArguments } from '../kevin_arguments.ts'
 import type { DenoConfigurationFileSchema } from '../deno_config_file_schema.ts'
-import type { DenoConfigFieldToCheck } from '../main.ts'
+import type { DenoConfigFieldToCheck } from '../config_field.ts'
 
 export type DenoConfigurationFileSchemaWithImports =
   & Omit<DenoConfigurationFileSchema, 'imports'>
@@ -27,7 +27,7 @@ function denoConfigFileHasImportEntries(
 async function findRemovableImportEntries(
   testFilename: string,
   config: DenoConfigurationFileSchemaWithImports,
-  options: ConfigOptions,
+  kevinArguments: KevinArguments,
 ): Promise<Array<string>> {
   const removableImportEntries: Array<string> = []
 
@@ -37,10 +37,10 @@ async function findRemovableImportEntries(
     const currentConfig = structuredClone(config)
     delete currentConfig.imports[key]
 
-    await writeDenoConfigFile(testFilename, currentConfig, options)
+    await writeDenoConfigFile(testFilename, currentConfig, kevinArguments)
 
     console.log('Running deno check')
-    const checkSuccess = await runDenoCheck(testFilename, options)
+    const checkSuccess = await runDenoCheck(testFilename, kevinArguments)
     if (!checkSuccess) {
       console.info(`Imports entry ${key} is required`)
       continue
