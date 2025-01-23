@@ -42,7 +42,13 @@ async function main() {
   const foundConfigToRemove = foundRemovableImportEntries ||
     foundRemovableUnstableEntries
 
-  await Deno.remove(testFilename)
+  try {
+    await Deno.remove(testFilename)
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) {
+      throw error
+    }
+  }
 
   if (kevinArguments.isOverwriteDenoConfigFileEnabled) {
     if (foundConfigToRemove) {

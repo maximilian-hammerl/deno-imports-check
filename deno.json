@@ -1,6 +1,6 @@
 {
   "name": "@maximilian-hammerl/deno-project-config-check",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "license": "MIT",
   "lock": false,
   "tasks": {
