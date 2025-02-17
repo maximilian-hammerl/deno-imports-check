@@ -1,6 +1,6 @@
 {
   "name": "@maximilian-hammerl/deno-project-config-check",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "license": "MIT",
   "lock": false,
   "tasks": {
@@ -16,7 +16,7 @@
     "compile-deno-config-file-json-schema-to-typescript-types": "./scripts/compile-deno-config-file-json-schema-to-typescript-types.sh"
   },
   "imports": {
-    "@std/cli": "jsr:@std/cli@^1.0.11",
+    "@std/cli": "jsr:@std/cli@^1.0.13",
     "@std/jsonc": "jsr:@std/jsonc@^1.0.1"
   },
   "lint": {
