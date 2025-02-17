@@ -1,18 +1,16 @@
 import type { DenoConfigurationFileSchema } from './deno_config_file_schema.ts'
-import type { KevinArguments } from './kevin_arguments.ts'
 
 export type DenoConfigFieldToCheck<
   FileSchemaWithField extends DenoConfigurationFileSchema,
 > = {
   field: string
-  isCheckFieldEnabled: (options: KevinArguments) => boolean
+  isCheckFieldEnabled: boolean
   denoConfigFileHasField: (
     config: DenoConfigurationFileSchema,
   ) => config is FileSchemaWithField
   findRemovableEntries: (
     testFilename: string,
     config: FileSchemaWithField,
-    kevinArguments: KevinArguments,
   ) => Promise<Array<string>>
   removeRemovableEntries: (
     config: FileSchemaWithField,
@@ -32,9 +30,8 @@ export async function checkDenoConfigField<
   }: DenoConfigFieldToCheck<FileSchemaWithField>,
   testFilename: string,
   config: DenoConfigurationFileSchema,
-  kevinArguments: KevinArguments,
 ): Promise<boolean> {
-  if (!isCheckFieldEnabled(kevinArguments)) {
+  if (!isCheckFieldEnabled) {
     console.info(`Checking ${field} field disabled`)
     return false
   }
@@ -48,7 +45,6 @@ export async function checkDenoConfigField<
   const removableEntries = await findRemovableEntries(
     testFilename,
     config,
-    kevinArguments,
   )
 
   if (removableEntries.length === 0) {

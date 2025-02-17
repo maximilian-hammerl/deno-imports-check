@@ -1,8 +1,8 @@
 import { writeDenoConfigFile } from '../deno_config_file.ts'
 import { runDenoCheck } from '../command.ts'
-import type { KevinArguments } from '../kevin_arguments.ts'
 import type { DenoConfigurationFileSchema } from '../deno_config_file_schema.ts'
 import type { DenoConfigFieldToCheck } from '../config_field.ts'
+import { KEVIN_ARGUMENTS } from '../kevin_arguments.ts'
 
 export type DenoConfigurationFileSchemaWithUnstable =
   & Omit<DenoConfigurationFileSchema, 'unstable'>
@@ -12,7 +12,7 @@ export const DENO_CONFIG_UNSTABLE_TO_CHECK: DenoConfigFieldToCheck<
   DenoConfigurationFileSchemaWithUnstable
 > = {
   field: 'unstable',
-  isCheckFieldEnabled: (options) => options.isCheckUnstableEnabled,
+  isCheckFieldEnabled: KEVIN_ARGUMENTS.isCheckUnstableEnabled,
   denoConfigFileHasField: denoConfigFileHasUnstableEntries,
   findRemovableEntries: findRemovableUnstableEntries,
   removeRemovableEntries: removeRemovableUnstableEntries,
@@ -28,7 +28,6 @@ function denoConfigFileHasUnstableEntries(
 async function findRemovableUnstableEntries(
   testFilename: string,
   config: DenoConfigurationFileSchemaWithUnstable,
-  kevinArguments: KevinArguments,
 ): Promise<Array<string>> {
   const removableUnstableEntries: Array<string> = []
 
@@ -40,10 +39,10 @@ async function findRemovableUnstableEntries(
       x !== unstable
     )
 
-    await writeDenoConfigFile(testFilename, currentConfig, kevinArguments)
+    await writeDenoConfigFile(testFilename, currentConfig)
 
     console.log('Running deno check')
-    const checkSuccess = await runDenoCheck(testFilename, kevinArguments)
+    const checkSuccess = await runDenoCheck(testFilename)
     if (!checkSuccess) {
       console.info(`Unstable entry ${unstable} is required`)
       continue

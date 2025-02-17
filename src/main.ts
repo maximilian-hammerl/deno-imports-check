@@ -1,19 +1,16 @@
 import { readDenoConfigFile, writeDenoConfigFile } from './deno_config_file.ts'
-import { getKevinArguments } from './kevin_arguments.ts'
 import { DENO_CONFIG_IMPORTS_TO_CHECK } from './config_fields/imports.ts'
 import { DENO_CONFIG_UNSTABLE_TO_CHECK } from './config_fields/unstable.ts'
 import { checkHasUncommittedChanges } from './command.ts'
 import { checkDenoConfigField } from './config_field.ts'
+import log from './log.ts'
+import { KEVIN_ARGUMENTS } from './kevin_arguments.ts'
 
 async function main() {
-  const kevinArguments = getKevinArguments()
+  log.debug('CLI arguments', KEVIN_ARGUMENTS)
 
-  if (kevinArguments.isDebug) {
-    console.debug('CLI arguments', kevinArguments)
-  }
-
-  if (kevinArguments.isGitEnabled) {
-    if ((await checkHasUncommittedChanges(kevinArguments))) {
+  if (KEVIN_ARGUMENTS.isGitEnabled) {
+    if ((await checkHasUncommittedChanges())) {
       console.warn(
         'Uncommitted changes found, exiting (check can be disabled with --no-git)',
       )
@@ -21,7 +18,7 @@ async function main() {
     }
   }
 
-  const { filename, config } = await readDenoConfigFile(kevinArguments)
+  const { filename, config } = await readDenoConfigFile()
 
   const testFilename = `test.${filename}`
 
@@ -29,14 +26,12 @@ async function main() {
     DENO_CONFIG_IMPORTS_TO_CHECK,
     testFilename,
     config,
-    kevinArguments,
   )
 
   const foundRemovableUnstableEntries = await checkDenoConfigField(
     DENO_CONFIG_UNSTABLE_TO_CHECK,
     testFilename,
     config,
-    kevinArguments,
   )
 
   const foundConfigToRemove = foundRemovableImportEntries ||
@@ -50,10 +45,10 @@ async function main() {
     }
   }
 
-  if (kevinArguments.isOverwriteDenoConfigFileEnabled) {
+  if (KEVIN_ARGUMENTS.isOverwriteDenoConfigFileEnabled) {
     if (foundConfigToRemove) {
       console.info(`Found entries to remove, overwriting ${filename}`)
-      await writeDenoConfigFile(filename, config, kevinArguments)
+      await writeDenoConfigFile(filename, config)
     } else {
       console.info(`Found no entries to remove, not overwriting ${filename}`)
     }

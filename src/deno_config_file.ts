@@ -1,40 +1,31 @@
 import { parse } from '@std/jsonc'
 import type { DenoConfigurationFileSchema } from './deno_config_file_schema.ts'
-import type { KevinArguments } from './kevin_arguments.ts'
+import log from './log.ts'
 
 const DENO_CONFIG_FILENAMES = ['deno.jsonc', 'deno.json', 'import_map.json']
 
-export async function readDenoConfigFile(options: KevinArguments): Promise<{
+export async function readDenoConfigFile(): Promise<{
   filename: string
   config: DenoConfigurationFileSchema
 }> {
   for (const filename of DENO_CONFIG_FILENAMES) {
-    if (options.isDebug) {
-      console.debug(`Trying to read deno config file ${filename}`)
-    }
+    log.debug(`Trying to read deno config file ${filename}`)
 
     let content: string
     try {
       content = await Deno.readTextFile(filename)
-      if (options.isDebug) {
-        console.debug(`Read ${filename} successfully`)
-      }
+      log.debug(`Read ${filename} successfully`)
     } catch (_error) {
-      if (options.isDebug) {
-        console.debug(`Failed to read ${filename}, continuing`)
-      }
+      log.debug(`Failed to read ${filename}, continuing`)
       continue
     }
 
-    if (options.isDebug) {
-      console.debug(`Trying to parse ${filename}`)
-    }
+    log.debug(`Trying to parse ${filename}`)
 
     try {
       const config = parse(content) as DenoConfigurationFileSchema
-      if (options.isDebug) {
-        console.debug(`Parsed ${filename} successfully`)
-      }
+      log.debug(`Parsed ${filename} successfully`)
+
       return {
         filename,
         config,
@@ -52,11 +43,8 @@ export async function readDenoConfigFile(options: KevinArguments): Promise<{
 export async function writeDenoConfigFile(
   filename: string,
   config: DenoConfigurationFileSchema,
-  kevinArguments: KevinArguments,
 ): Promise<void> {
-  if (kevinArguments.isDebug) {
-    console.debug(`Trying to write deno config file ${filename}`)
-  }
+  log.debug(`Trying to write deno config file ${filename}`)
 
   let content: string
   try {
